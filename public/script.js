@@ -6,47 +6,201 @@ var C = SAT.Circle;
 
 const clamp = (a, min = 0, max = 1) => Math.min(max, Math.max(min, a));
 const invlerp = (x, y, a) => clamp((a - x) / (y - x));
-const lerp = (x, y, a) => x * (1 - a) + y * a;
+const lerp2d = (x, y, a) => x * (1 - a) + y * a;
+
+//start screen
+document.getElementById('nickform').addEventListener('submit', function(event) {
+  event.preventDefault();
+  socket.emit('join', document.getElementById("nickname").value);
+  document.getElementById("start").style.visibility = 'hidden';
+  document.getElementById("game").style.visibility = 'visible';
+});
+
+
+//assets
+var assets = {};
+function preload() {
+  document.getElementById("p5_loading").style.visibility = 'hidden';
+  assets.pistol = loadImage('assets/Diana Raptor 4.png');
+  assets.ak = loadImage('assets/Ak47.png');
+  assets.shotgun = loadImage('assets/Shotgun.png');
+  assets.awm = loadImage('assets/awm.png');
+  assets.boltaction = loadImage('assets/Kar98k.png');
+  assets.tileset = loadImage("assets/tiles/Sphyr_r.png");
+  assets.ammosmall = loadImage("assets/ammosmall.png");
+  assets.ammolarge = loadImage("assets/ammolarge.png");
+
+  assets.damageboost = loadImage("assets/icons/damageboost.png");
+  assets.capacityboost = loadImage("assets/icons/capacityboost.png");
+  assets.healthboost = loadImage("assets/icons/healthboost.png");
+  assets.healthpack = loadImage("assets/icons/healthpack.png");
+  assets.precisionboost = loadImage("assets/icons/precisionboost.png");
+  assets.speedboost = loadImage("assets/icons/speedboost.png");
+
+  assets.font = loadFont("assets/fonts/PIXEAB__.TTF");
+  assets.fontb = loadFont("assets/fonts/PIXEARG_.TTF");
+}
 
 function setup() {
+  document.getElementById("loading").style.visibility = 'hidden';
+  document.getElementById("start").style.visibility = 'visible';
+  document.getElementById("nickname").select();
   createCanvas(window.innerWidth, window.innerHeight).id('game');
   document.getElementById("game").style.cursor = "crosshair";
   document.addEventListener('contextmenu', event => event.preventDefault());
   rectMode(CENTER);
   ellipseMode(CENTER);
+  textAlign(CENTER);
+  // frameRate(60);
+  textFont(assets.font, 100 * u);
+}
+
+function errormessage(e) {
+  document.getElementById("game").style.visibility = 'hidden';
+  document.getElementById("start").style.visibility = 'hidden';
+  document.getElementById("messagec").style.visibility = 'visible';
+  document.getElementById("message").innerHTML = 'Error: ' + e;
+}
+
+function deathmessage() {
+  hand = 0;
+  document.getElementById("game").style.visibility = 'hidden';
+  document.getElementById("start").style.visibility = 'visible';
+  document.getElementById("nickname");
+  let dd = document.getElementById("death");
+  if (dd) {
+    dd.remove();
+  }
+  let d = document.createElement("p");
+  d.innerHTML = 'You died!';
+  d.style.color = 'red';
+  d.id = 'death';
+  document.getElementById("start").appendChild(d);
 }
 
 var players = [];
 var objects = [];
+var tmap = [];
 var bullets = [];
+var dropitem = [];
+var bots = [];
+var player;
+var oindex;
+var st = performance.now();
+var hand = 0;
 var localp = { x: 1000, y: 1000 };
-var id;
+
+var tdr = true;
+var sdr = true;
 
 var u = ((window.innerWidth) / 10000);
 
-function p(x, y, r) {
+function p(x, y, r, h, n, hp, c, mhp) {
   push();
-  circle(x * u, y * u, 500 * u);
-  if (r) {
-    translate(x * u, y * u);
-    rotate(r);
-    fill(color('black'));
-    rect(0, 300 * u, 80 * u, 200 * u, 10);
+
+
+  push();
+  if (c) {
+    fill(c);
   }
+  circle(x * u, y * u, 500 * u);
   pop();
-}
 
-function o(x, y) {
+  if (r !== null) {
+    push();
+    noSmooth();
+    if (h === 'pistol') {
+      translate(x * u, y * u);
+      rotate(r + radians(90));
+      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
+        scale(1.0, -1.0);
+      }
+      let ws = (400 * u) / assets.pistol.height;
+      let ws2 = (-(1400 * u) / assets.pistol.width) / 2;
+      image(assets.pistol, (assets.pistol.width * ws2) + (600 * u), -200 * u, assets.pistol.width * ws, assets.pistol.height * ws);
+    } else if (h === 'ak') {
+      translate(x * u, y * u);
+      rotate(r + radians(90));
+      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
+        scale(1.0, -1.0);
+      }
+
+      let ws = (400 * u) / assets.ak.height;
+      let ws2 = (-(1400 * u) / assets.ak.width) / 2;
+      image(assets.ak, (assets.ak.width * ws2) + (800 * u), -200 * u, assets.ak.width * ws, assets.ak.height * ws);
+    } else if (h === 'shotgun') {
+      translate(x * u, y * u);
+      rotate(r + radians(90));
+      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
+        scale(1.0, -1.0);
+      }
+      let ws = (400 * u) / assets.shotgun.height;
+      let ws2 = (-(1400 * u) / assets.shotgun.width) / 2;
+      image(assets.shotgun, (assets.shotgun.width * ws2) + (750 * u), -200 * u, assets.shotgun.width * ws, assets.shotgun.height * ws);
+    } else if (h === 'boltaction') {
+      translate(x * u, y * u);
+      rotate(r + radians(90));
+      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
+        scale(1.0, -1.0);
+      }
+      let ws = (400 * u) / assets.boltaction.height;
+      let ws2 = (-(1400 * u) / assets.boltaction.width) / 2;
+      image(assets.boltaction, (assets.boltaction.width * ws2) + (750 * u), -200 * u, assets.boltaction.width * ws, assets.boltaction.height * ws);
+    } else if (h !== 'empty') {
+      translate(x * u, y * u);
+      rotate(r + radians(90));
+      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
+        scale(1.0, -1.0);
+      }
+      let ws = (400 * u) / assets[h].height;
+      let ws2 = (-(1400 * u) / assets[h].width) / 2;
+      image(assets[h], (assets[h].width * ws2) + (750 * u), -200 * u, assets[h].width * ws, assets[h].height * ws);
+    }
+    pop();
+  }
+
   push();
-  fill(color('black'));
-  rect(x * u, y * u, 500 * u, 500 * u);
+  fill(50, 0, 150);
+  text(n, x * u, (y - 400) * u);
+  pop();
+
+  push();
+  strokeWeight(8);
+  line((x - 250) * u, (y - 350) * u, (x + 250) * u, (y - 350) * u);
+  strokeWeight(5);
+  stroke(0, 173, 43);
+  line((x - 250) * u, (y - 350) * u, (x + lerp2d(-250, 250, hp / mhp)) * u, (y - 350) * u);
+  pop();
+
   pop();
 }
 
-function b(x, y, x2, y2) {
+function b(x, y) {
   push();
   fill(color('blue'));
   circle(x * u, y * u, 80 * u);
+  pop();
+}
+
+function it(x, y, item) {
+  push();
+  let ws = (300 * u) / assets[item].height;
+  noSmooth();
+  image(assets[item], x * u, y * u, assets[item].width * ws, assets[item].height * ws);
+  pop();
+}
+
+function drawTiles(map, d_cols, s_cols, tilesize, drawsize) {
+  push();
+  for (let i = map.length - 1; i > -1; --i) {
+    let value = Math.floor(map[i] - 1);
+    let sx = (value % s_cols) * tilesize;
+    let sy = Math.floor(value / s_cols) * tilesize;
+    let dx = (i % d_cols) * drawsize;
+    let dy = Math.floor(i / d_cols) * drawsize;
+    noSmooth();
+    image(assets.tileset, dx, dy, drawsize, drawsize, sx, sy, tilesize, tilesize);
+  }
   pop();
 }
 
@@ -58,21 +212,34 @@ window.addEventListener('keyup', function(e) {
   keyState[e.keyCode || e.which] = false;
 }, true);
 
-socket.emit('join')
-
 function draw() {
-  clear();
-  if (id) {
+  background(0);
+  if (player) {
+    push();
 
     translate(windowWidth / 2, windowHeight / 2);
 
     translate(-localp.x * u, -localp.y * u);
 
-    for (player of players) {
-      if (player) {
-        if (player.id !== id) {
-          p(player.x, player.y, player.r);
+    drawTiles(tmap, 100, 7, 160, 500 * u);
+
+    for (item of dropitem) {
+      if (item) {
+        it(item.x, item.y, item.item);
+      }
+    }
+
+    for (plr of players) {
+      if (plr) {
+        if (plr.id !== player.id) {
+          p(plr.x, plr.y, plr.r, plr.holding, plr.name, plr.health, 'rgb(255,255,255)', plr.maxhp);
         }
+      }
+    }
+
+    for (bot of bots) {
+      if (bot) {
+        p(bot.x, bot.y, bot.r, bot.weapon, bot.name, bot.health, bot.color, bot.maxhp);
       }
     }
 
@@ -82,84 +249,202 @@ function draw() {
       }
     }
 
-    push();
-    translate(localp.x * u, localp.y * u);
-    rotate(Math.atan2(mouseY - (windowHeight / 2), mouseX - (windowWidth / 2)) + radians(-90));
-
-    fill(color('black'));
-
-    rect(0, 300 * u, 80 * u, 200 * u, 10);
-
-    // rect(-20, 300 * u, 80 * u, 200 * u, 10);
-    // rect(20, 300 * u, 80 * u, 200 * u, 10);
-    pop();
-
-    p(localp.x, localp.y);
-
-    for (object of objects) {
-      if (object) {
-        o(object.x, object.y);
-      }
-    }
+    p(localp.x, localp.y, Math.atan2(mouseY - (windowHeight / 2), mouseX - (windowWidth / 2)) + radians(-90), player.inventory[hand], player.name, player.health, 'rgb(255,255,255)', player.maxhp);
 
     let pr = false;
 
+
+
+    if (keyState[32]) {
+      if (performance.now() - (1000 * 1.1) >= st) {
+        st = performance.now();
+        socket.emit('s');
+      }
+    }
+
     if (keyState[87]) {
       pr = true;
-      localp.y -= 20;
+      localp.y -= player.speed2;
     }
 
     if (keyState[65]) {
       pr = true;
-      localp.x -= 20;
+      localp.x -= player.speed2;
     }
 
     if (keyState[83]) {
       pr = true;
-      localp.y += 20;
+      localp.y += player.speed2;
     }
 
     if (keyState[68]) {
       pr = true;
-      localp.x += 20;
+      localp.x += player.speed2;
     }
 
-    for (object of objects) {
-      let pc = new C(new V(localp.x + 250, localp.y + 250), 250);
+    if (keyState[49] && sdr === false) {
+      hand = 0;
+      socket.emit('h', hand);
+    }
+    if (keyState[50] && sdr === false) {
+      hand = 1;
+      socket.emit('h', hand);
+    }
+    if (keyState[51] && sdr === false) {
+      hand = 2;
+      socket.emit('h', hand);
+    }
+    if (keyState[52] && sdr === false) {
+      hand = 3;
+      socket.emit('h', hand);
+    }
+    if (keyState[53] && sdr === false) {
+      hand = 4;
+      socket.emit('h', hand);
+    }
+
+
+    if (!keyState[49] && !keyState[50] && !keyState[51] && !keyState[52] && !keyState[53]) {
+      sdr = false;
+    }
+
+
+    if (keyState[81] && tdr === false) {
+      tdr = true;
+      socket.emit('drop', hand);
+    }
+
+    if (!keyState[81]) {
+      tdr = false;
+    }
+
+    let om = oindex.within(localp.x, localp.y, 1000);
+
+    om.map(oid => {
+      object = objects[oid];
+      let pc = new C(new V(localp.x, localp.y), 250);
       let oc = new B(new V(object.x, object.y), 500, 500).toPolygon();
       let response = new SAT.Response();
       let collided = SAT.testCirclePolygon(pc, oc, response);
       if (collided) {
-        let overlapV = response.overlapV.clone().scale(-1.1);
-        localp.x += overlapV.x;
-        localp.y += overlapV.y;
+        let clist = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 59];
+
+        if (clist.includes(object.tt)) {
+          let overlapV = response.overlapV.clone().scale(-1);
+          localp.x += overlapV.x;
+          localp.y += overlapV.y;
+        }
       }
-    }
+    });
 
     if (pr = true) {
       socket.emit('m', localp.x, localp.y);
     }
 
+    socket.emit('r', Math.atan2(mouseY - (windowHeight / 2), mouseX - (windowWidth / 2)) + radians(-90));
+
     if (mouseIsPressed) {
       if (mouseButton === LEFT) {
-        socket.emit('shoot', Math.atan2(mouseY - (windowHeight / 2), mouseX - (windowWidth / 2)));
+        socket.emit('shoot');
       }
       // if (mouseButton === RIGHT) {
       // }
       // if (mouseButton === CENTER) {
       // }
     }
+    pop();
+
+    push();
+    noStroke();
+    fill(0, 0, 0, 127);
+    rect(windowWidth - (800 * u), windowHeight - (1275 * u), 1500 * u, 2500 * u, 5);
+    pop();
+
+    text('Ammunition: ' + player.ammo + '/' + player.maxammo, windowWidth - (800 * u), windowHeight - (2600 * u));
+
+    push();
+    stroke(0, 34, 69);
+    fill(0, 34, 69);
+    if (player.inventory[player.hand] === 'pistol') {
+      text('Shoots bullets.', windowWidth - (800 * u), windowHeight - (2900 * u));
+    }
+
+    if (player.inventory[player.hand] === 'shotgun') {
+      text('Shoots more bullets.', windowWidth - (800 * u), windowHeight - (2900 * u));
+    }
+
+    if (player.inventory[player.hand] === 'Ak47') {
+      text('Shoots bullets,\n but faster.', windowWidth - (800 * u), windowHeight - (2900 * u));
+    }
+
+    if (player.inventory[player.hand] === 'boltaction') {
+      text('OwO', windowWidth - (800 * u), windowHeight - (2900 * u));
+    }
+
+    if (player.inventory[player.hand] === 'awm') {
+      text('UwU', windowWidth - (800 * u), windowHeight - (2900 * u));
+    }
+
+    if (player.inventory[player.hand] === 'capacityboost') {
+      text('+300 ammunition \n capacity when in\n inventory.\n (Does not stack)', windowWidth - (800 * u), windowHeight - (3100 * u));
+    }
+    pop();
+
+    for ([i, slot] of player.inventory.entries()) {
+      push();
+      if (i === hand) {
+        strokeWeight(6);
+        stroke(255, 0, 0);
+      } else {
+        strokeWeight(3);
+      }
+
+      translate((windowWidth - (800 * u)), windowHeight - (2268 * u) + ((500 * i) * u));
+      noFill();
+      rect(0, 0, 1400 * u, 400 * u);
+      if (slot !== 'empty') {
+        let ws = (400 * u) / assets[slot].height;
+        let ws2 = (-(1400 * u) / assets[slot].width) / 4;
+        noSmooth();
+        image(assets[slot], (assets[slot].width * ws2), -200 * u, assets[slot].width * ws, assets[slot].height * ws);
+      }
+      pop();
+    }
+
+
+    push();
+    let elist = 1;
+    if (player.effects.includes('Invincible')) {
+      elist++;
+      stroke(0, 255, 0);
+      text('Invincible', 400 * u, elist * (120 * u));
+    }
+    pop();
 
   }
+}
+
+function mouseWheel(event) {
+  if (Math.sign(event.delta) === 1) {
+    hand += 1;
+  }
+  if (Math.sign(event.delta) === -1) {
+    hand -= 1;
+  }
+  if (hand > 4) {
+    hand = 0;
+  }
+  if (hand < 0) {
+    hand = 4;
+  }
+
+  socket.emit('h', hand);
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   u = (windowWidth / 10000);
-}
-
-function mouseMoved() {
-  socket.emit('r', Math.atan2(mouseY - (windowHeight / 2), mouseX - (windowWidth / 2)) + radians(-90));
+  textFont(assets.font, 100 * u);
 }
 
 var latency;
@@ -175,23 +460,35 @@ socket.on('pong', function() {
 });
 
 //main emit
-socket.on('p', function(p, b) {
+socket.on('p', function(p, b, pl, di, bo) {
   players = p;
   bullets = b;
+  player = pl;
+  dropitem = di;
+  bots = bo;
 });
 
 socket.on('o', function(o) {
   objects = o;
-});
-
-socket.on('id', function(sid) {
-  id = sid;
+  oindex = new KDBush(objects, p => p.x, p => p.y, 64, Int32Array);
 });
 
 socket.on('c', function(p) {
   localp = p;
 });
 
-socket.on("disconnect", function() {
-  alert('disconnected')
+socket.on('name', function(n) {
+  name = n;
+});
+
+socket.on('tmap', function(m) {
+  tmap = m;
+});
+
+socket.on("disconnect", function(reason) {
+  errormessage(reason);
+});
+
+socket.on("dead", function() {
+  deathmessage();
 });
