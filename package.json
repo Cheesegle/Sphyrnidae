@@ -14,6 +14,9 @@
     "is-empty-null-undef-nan-whitespace": "^1.0.3",
     "is-whitespace": "^0.3.0",
     "kdbush": "^3.0.0",
+    "loot-table": "^0.1.0",
+    "lzutf8": "^0.6.0",
+    "object-sizeof": "^1.6.1",
     "sat": "^0.9.0",
     "socket.io": "^4.1.2",
     "walkable": "^1.0.7"

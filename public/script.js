@@ -21,20 +21,21 @@ document.getElementById('nickform').addEventListener('submit', function(event) {
 var assets = {};
 function preload() {
   document.getElementById("p5_loading").style.visibility = 'hidden';
-  assets.pistol = loadImage('assets/Diana Raptor 4.png');
-  assets.ak = loadImage('assets/Ak47.png');
-  assets.shotgun = loadImage('assets/Shotgun.png');
-  assets.awm = loadImage('assets/awm.png');
-  assets.boltaction = loadImage('assets/Kar98k.png');
+
+  assets.pistol = loadImage('assets/weapons/m9.png');
+  assets.ak = loadImage('assets/weapons/ak.png');
+  assets.shotgun = loadImage('assets/weapons/shotgun.png');
+  assets.aug = loadImage('assets/weapons/aug.png');
+
   assets.tileset = loadImage("assets/tiles/Sphyr_r.png");
   assets.ammosmall = loadImage("assets/ammosmall.png");
   assets.ammolarge = loadImage("assets/ammolarge.png");
+  assets.bullet = loadImage("assets/bullet.png");
 
   assets.damageboost = loadImage("assets/icons/damageboost.png");
   assets.capacityboost = loadImage("assets/icons/capacityboost.png");
   assets.healthboost = loadImage("assets/icons/healthboost.png");
   assets.healthpack = loadImage("assets/icons/healthpack.png");
-  assets.precisionboost = loadImage("assets/icons/precisionboost.png");
   assets.speedboost = loadImage("assets/icons/speedboost.png");
 
   assets.font = loadFont("assets/fonts/PIXEAB__.TTF");
@@ -48,10 +49,10 @@ function setup() {
   createCanvas(window.innerWidth, window.innerHeight).id('game');
   document.getElementById("game").style.cursor = "crosshair";
   document.addEventListener('contextmenu', event => event.preventDefault());
+  document.body.onmousedown = function(e) { if (e.button === 1) return false; }
   rectMode(CENTER);
   ellipseMode(CENTER);
   textAlign(CENTER);
-  // frameRate(60);
   textFont(assets.font, 100 * u);
 }
 
@@ -93,7 +94,7 @@ var localp = { x: 1000, y: 1000 };
 var tdr = true;
 var sdr = true;
 
-var u = ((window.innerWidth) / 10000);
+var u = ((window.innerWidth) / 9000);
 
 function p(x, y, r, h, n, hp, c, mhp) {
   push();
@@ -109,44 +110,7 @@ function p(x, y, r, h, n, hp, c, mhp) {
   if (r !== null) {
     push();
     noSmooth();
-    if (h === 'pistol') {
-      translate(x * u, y * u);
-      rotate(r + radians(90));
-      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
-        scale(1.0, -1.0);
-      }
-      let ws = (400 * u) / assets.pistol.height;
-      let ws2 = (-(1400 * u) / assets.pistol.width) / 2;
-      image(assets.pistol, (assets.pistol.width * ws2) + (600 * u), -200 * u, assets.pistol.width * ws, assets.pistol.height * ws);
-    } else if (h === 'ak') {
-      translate(x * u, y * u);
-      rotate(r + radians(90));
-      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
-        scale(1.0, -1.0);
-      }
-
-      let ws = (400 * u) / assets.ak.height;
-      let ws2 = (-(1400 * u) / assets.ak.width) / 2;
-      image(assets.ak, (assets.ak.width * ws2) + (800 * u), -200 * u, assets.ak.width * ws, assets.ak.height * ws);
-    } else if (h === 'shotgun') {
-      translate(x * u, y * u);
-      rotate(r + radians(90));
-      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
-        scale(1.0, -1.0);
-      }
-      let ws = (400 * u) / assets.shotgun.height;
-      let ws2 = (-(1400 * u) / assets.shotgun.width) / 2;
-      image(assets.shotgun, (assets.shotgun.width * ws2) + (750 * u), -200 * u, assets.shotgun.width * ws, assets.shotgun.height * ws);
-    } else if (h === 'boltaction') {
-      translate(x * u, y * u);
-      rotate(r + radians(90));
-      if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
-        scale(1.0, -1.0);
-      }
-      let ws = (400 * u) / assets.boltaction.height;
-      let ws2 = (-(1400 * u) / assets.boltaction.width) / 2;
-      image(assets.boltaction, (assets.boltaction.width * ws2) + (750 * u), -200 * u, assets.boltaction.width * ws, assets.boltaction.height * ws);
-    } else if (h !== 'empty') {
+    if (h !== 'empty' && assets[h] !== undefined) {
       translate(x * u, y * u);
       rotate(r + radians(90));
       if (degrees(r) <= -180 || (degrees(r) <= 90 && degrees(r) >= 0)) {
@@ -154,7 +118,7 @@ function p(x, y, r, h, n, hp, c, mhp) {
       }
       let ws = (400 * u) / assets[h].height;
       let ws2 = (-(1400 * u) / assets[h].width) / 2;
-      image(assets[h], (assets[h].width * ws2) + (750 * u), -200 * u, assets[h].width * ws, assets[h].height * ws);
+      image(assets[h], (assets[h].width * ws2) + (650 * u), -150 * u, assets[h].width * ws, assets[h].height * ws);
     }
     pop();
   }
@@ -177,8 +141,8 @@ function p(x, y, r, h, n, hp, c, mhp) {
 
 function b(x, y) {
   push();
-  fill(color('blue'));
-  circle(x * u, y * u, 80 * u);
+  let ws = (80 * u) / assets.bullet.height;
+  image(assets.bullet, x * u, y * u, assets.bullet.width * ws, assets.bullet.height * ws);
   pop();
 }
 
@@ -194,12 +158,16 @@ function drawTiles(map, d_cols, s_cols, tilesize, drawsize) {
   push();
   for (let i = map.length - 1; i > -1; --i) {
     let value = Math.floor(map[i] - 1);
-    let sx = (value % s_cols) * tilesize;
-    let sy = Math.floor(value / s_cols) * tilesize;
-    let dx = (i % d_cols) * drawsize;
-    let dy = Math.floor(i / d_cols) * drawsize;
-    noSmooth();
-    image(assets.tileset, dx, dy, drawsize, drawsize, sx, sy, tilesize, tilesize);
+    if (value !== -1) {
+      let sx = (value % s_cols) * tilesize;
+      let sy = Math.floor(value / s_cols) * tilesize;
+      let dx = (i % d_cols) * drawsize;
+      let dy = Math.floor(i / d_cols) * drawsize;
+      noSmooth();
+      if (Math.abs(dx - (player.x * u)) - (1000 * u) <= windowWidth / 2 && Math.abs(dy - (player.y * u)) - (1000 * u) <= windowHeight / 2) {
+        image(assets.tileset, dx, dy, drawsize, drawsize, sx, sy, tilesize, tilesize);
+      }
+    }
   }
   pop();
 }
@@ -221,7 +189,7 @@ function draw() {
 
     translate(-localp.x * u, -localp.y * u);
 
-    drawTiles(tmap, 100, 7, 160, 500 * u);
+    drawTiles(tmap, 600, 7, 128, 500 * u);
 
     for (item of dropitem) {
       if (item) {
@@ -238,9 +206,7 @@ function draw() {
     }
 
     for (bot of bots) {
-      if (bot) {
-        p(bot.x, bot.y, bot.r, bot.weapon, bot.name, bot.health, bot.color, bot.maxhp);
-      }
+      p(bot.x, bot.y, bot.r, bot.weapon, bot.name, bot.health, bot.color, bot.maxhp);
     }
 
     for (bullet of bullets) {
@@ -327,7 +293,7 @@ function draw() {
       let response = new SAT.Response();
       let collided = SAT.testCirclePolygon(pc, oc, response);
       if (collided) {
-        let clist = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 59];
+        let clist = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 59, 56, 61, 62, 65, 66];
 
         if (clist.includes(object.tt)) {
           let overlapV = response.overlapV.clone().scale(-1);
@@ -357,14 +323,16 @@ function draw() {
     push();
     noStroke();
     fill(0, 0, 0, 127);
-    rect(windowWidth - (800 * u), windowHeight - (1275 * u), 1500 * u, 2500 * u, 5);
+    rect(windowWidth - (1300 * u), windowHeight - (300 * u), 2500 * u, 500 * u);
     pop();
-
-    text('Ammunition: ' + player.ammo + '/' + player.maxammo, windowWidth - (800 * u), windowHeight - (2600 * u));
 
     push();
     stroke(0, 34, 69);
     fill(0, 34, 69);
+
+    text('Ammunition: ' + player.ammo + '/' + player.maxammo, windowWidth - (800 * u), windowHeight - (2600 * u));
+
+
     if (player.inventory[player.hand] === 'pistol') {
       text('Shoots bullets.', windowWidth - (800 * u), windowHeight - (2900 * u));
     }
@@ -373,21 +341,18 @@ function draw() {
       text('Shoots more bullets.', windowWidth - (800 * u), windowHeight - (2900 * u));
     }
 
-    if (player.inventory[player.hand] === 'Ak47') {
+    if (player.inventory[player.hand] === 'ak') {
       text('Shoots bullets,\n but faster.', windowWidth - (800 * u), windowHeight - (2900 * u));
     }
 
-    if (player.inventory[player.hand] === 'boltaction') {
+    if (player.inventory[player.hand] === 'aug') {
       text('OwO', windowWidth - (800 * u), windowHeight - (2900 * u));
     }
 
-    if (player.inventory[player.hand] === 'awm') {
+    if (player.inventory[player.hand] === 'm4') {
       text('UwU', windowWidth - (800 * u), windowHeight - (2900 * u));
     }
 
-    if (player.inventory[player.hand] === 'capacityboost') {
-      text('+300 ammunition \n capacity when in\n inventory.\n (Does not stack)', windowWidth - (800 * u), windowHeight - (3100 * u));
-    }
     pop();
 
     for ([i, slot] of player.inventory.entries()) {
@@ -399,14 +364,14 @@ function draw() {
         strokeWeight(3);
       }
 
-      translate((windowWidth - (800 * u)), windowHeight - (2268 * u) + ((500 * i) * u));
+      translate(windowWidth - (2300 * u) + ((500 * i) * u), windowHeight - (300 * u));
       noFill();
-      rect(0, 0, 1400 * u, 400 * u);
+      rect(0, 0, 400 * u, 400 * u);
       if (slot !== 'empty') {
-        let ws = (400 * u) / assets[slot].height;
-        let ws2 = (-(1400 * u) / assets[slot].width) / 4;
+        let ws = (350 * u) / assets[slot].width;
+        let ws2 = (-(650 * u) / assets[slot].width) / 4;
         noSmooth();
-        image(assets[slot], (assets[slot].width * ws2), -200 * u, assets[slot].width * ws, assets[slot].height * ws);
+        image(assets[slot], (assets[slot].width * ws2), -100 * u, assets[slot].width * ws, assets[slot].height * ws);
       }
       pop();
     }
@@ -470,7 +435,7 @@ socket.on('p', function(p, b, pl, di, bo) {
 
 socket.on('o', function(o) {
   objects = o;
-  oindex = new KDBush(objects, p => p.x, p => p.y, 64, Int32Array);
+  oindex = new KDBush(objects, p => p.x, p => p.y, 16, Int32Array);
 });
 
 socket.on('c', function(p) {
